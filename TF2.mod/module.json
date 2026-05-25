@@ -1,0 +1,123 @@
+{
+  "id": "tf2",
+  "name": "Team Fortress 2",
+  "version": "0.1.0",
+  "author": "Shenniko",
+  "description": "WindowsGSH module for installing, configuring, launching, querying, and backing up a Team Fortress 2 dedicated server.",
+  "url": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "homepage": "https://wiki.teamfortress.com/wiki/Windows_dedicated_server",
+  "repository": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "sourceUrl": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "color": "#1E8449",
+  "type": "csharp",
+  "entry": "WindowsGSH.Modules.TF2.TF2Module",
+  "steam": {
+    "appId": "232250",
+    "anonymous": true,
+    "validate": true
+  },
+  "platform": "windows",
+  "source": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "entryPoints": {
+    "start": "srcds.exe",
+    "processName": "srcds"
+  },
+  "runtime": {
+    "allowsEmbeddedConsole": true,
+    "hideProcessWindow": true,
+    "portIncrements": 1,
+    "queryProtocol": "A2S",
+    "rconProtocol": "Source",
+    "defaultArguments": "-console -game tf -ip {network.ip} -port {network.directConnectionPort} +map {server.map} +maxplayers {server.maxPlayers} +exec server.cfg"
+  },
+  "capabilities": {
+    "directConnection": true
+  },
+  "configFields": [
+    {
+      "key": "server.name",
+      "label": "Server Name",
+      "type": "Text",
+      "defaultValue": "WindowsGSH TF2 Server",
+      "required": true
+    },
+    {
+      "key": "server.map",
+      "label": "Start Map",
+      "type": "Text",
+      "defaultValue": "ctf_2fort",
+      "required": true
+    },
+    {
+      "key": "server.maxPlayers",
+      "label": "Max Players",
+      "type": "Number",
+      "defaultValue": 24,
+      "required": true,
+      "minimum": 1,
+      "maximum": 32
+    },
+    {
+      "key": "network.ip",
+      "label": "Server IP",
+      "type": "Text",
+      "defaultValue": "0.0.0.0"
+    },
+    {
+      "key": "network.directConnectionPort",
+      "label": "Server/RCON Port",
+      "type": "Port",
+      "defaultValue": 27015
+    },
+    {
+      "key": "server.password",
+      "label": "Server Password",
+      "type": "Password",
+      "defaultValue": ""
+    },
+    {
+      "key": "rcon.password",
+      "label": "RCON Password",
+      "type": "Password",
+      "defaultValue": "change-me",
+      "required": true
+    },
+    {
+      "key": "server.lan",
+      "label": "LAN Server",
+      "type": "Boolean",
+      "defaultValue": false
+    },
+    {
+      "key": "server.additionalArguments",
+      "label": "Additional Arguments",
+      "type": "CommandLine",
+      "defaultValue": ""
+    }
+  ],
+  "configFiles": [
+    "tf/cfg/server.cfg"
+  ],
+  "backupTargets": [
+    {
+      "key": "server-cfg",
+      "label": "Server config",
+      "path": "tf/cfg",
+      "type": "directory"
+    },
+    {
+      "key": "custom-content",
+      "label": "Custom content",
+      "path": "tf/custom",
+      "type": "directory"
+    },
+    {
+      "key": "addons",
+      "label": "SourceMod / Metamod addons",
+      "path": "tf/addons",
+      "type": "directory"
+    }
+  ],
+  "addons": []
+}
+
