@@ -18,6 +18,7 @@ Import `TF2.mod` directly, or import the repository root and let WindowsGSH disc
 
 ## Current Status
 
+- Declares WindowsGSH module API `1.0` compatibility.
 - Installs through SteamCMD app `232250`.
 - Starts `srcds.exe` with `-console -game tf`.
 - Writes `tf/cfg/server.cfg`.
