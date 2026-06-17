@@ -9,6 +9,11 @@
   "repository": "https://github.com/WindowsGSH/WindowsGSH.TF2",
   "sourceUrl": "https://github.com/WindowsGSH/WindowsGSH.TF2",
   "color": "#1E8449",
+  "moduleApiVersion": "1.0",
+  "minimumWindowsGshVersion": "1.0",
+  "supportedWindowsGshVersions": [
+    "1.*"
+  ],
   "type": "csharp",
   "entry": "WindowsGSH.Modules.TF2.TF2Module",
   "steam": {
