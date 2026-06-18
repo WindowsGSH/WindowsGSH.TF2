@@ -28,7 +28,8 @@
     "processName": "srcds"
   },
   "runtime": {
-    "allowsEmbeddedConsole": true,
+    "consoleStrategy": "RconPreferred",
+    "allowsEmbeddedConsole": false,
     "hideProcessWindow": true,
     "portIncrements": 1,
     "queryProtocol": "A2S",
