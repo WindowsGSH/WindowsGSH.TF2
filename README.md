@@ -25,6 +25,7 @@ Import `TF2.mod` directly, or import the repository root and let WindowsGSH disc
 - Supports Source query status.
 - Supports Source RCON through the configured RCON password.
 - Backs up server config, custom content, and SourceMod/Metamod addons.
+- Supports WindowsGSH existing-server import and WindowsGSM-style `serverfiles` imports.
 
 ## Quick Start
 
@@ -40,9 +41,18 @@ Import `TF2.mod` directly, or import the repository root and let WindowsGSH disc
 - `server.map`: first map passed to `srcds.exe`.
 - `server.maxPlayers`: maximum players passed to launch arguments.
 - `network.ip`: bind address. Use `0.0.0.0` for all interfaces.
-- `network.directConnectionPort`: game, query, and RCON port for the default TF2 setup.
+- `network.port`: game, query, and RCON port for the default TF2 setup.
 - `rcon.password`: required for RCON commands.
 - `server.additionalArguments`: optional extra launch arguments.
+
+## Existing Server Import
+
+Choose **Import Existing** and select either:
+
+- a TF2 dedicated-server install containing `srcds.exe`; or
+- a WindowsGSM server folder containing `serverfiles/srcds.exe`.
+
+Existing values are previewed from `tf/cfg/server.cfg` when present.
 
 ## Backups
 
