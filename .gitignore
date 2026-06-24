@@ -6,3 +6,4 @@ release/
 *.tmp
 *.log
 import.json
+*.Tests/
