@@ -13,7 +13,7 @@ using WindowsGSH.Core.Servers;
 
 namespace WindowsGSH.Modules.TF2;
 
-public sealed class TF2Module : IGameServerModule, IManifestBackedModule
+public sealed class TF2Module : IGameServerModule, IManifestBackedModule, IModuleExistingServerImportCapability
 {
     private ModuleManifest? _manifest;
     private string _moduleDirectory = AppContext.BaseDirectory;
@@ -36,6 +36,48 @@ public sealed class TF2Module : IGameServerModule, IManifestBackedModule
     {
         _manifest = manifest;
         _moduleDirectory = moduleDirectory;
+    }
+
+    public bool CanImport(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var installPath = ResolveExistingInstallPath(path);
+        return File.Exists(Path.Combine(installPath, Runtime.StartPath));
+    }
+
+    public async Task<ModuleExistingServerImportProbe> PreviewImportAsync(string path, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var sourcePath = Path.GetFullPath(path);
+        var installPath = ResolveExistingInstallPath(sourcePath);
+        var probeInstance = new ServerInstance(
+            Id: Path.GetFileName(sourcePath),
+            Name: Name,
+            ModuleId: Id,
+            ServerFolder: sourcePath,
+            InstallPath: installPath,
+            ConfigPath: Path.Combine(sourcePath, "ServerConfig.json"),
+            Settings: new Dictionary<string, object?>());
+
+        var settings = new Dictionary<string, object?>(
+            await ReadConfigFileSettingsAsync(probeInstance, cancellationToken),
+            StringComparer.OrdinalIgnoreCase);
+        var warnings = new List<string>();
+        if (!File.Exists(GetServerCfgPath(probeInstance)))
+        {
+            warnings.Add("tf/cfg/server.cfg was not found. WindowsGSH will use module defaults for missing values.");
+        }
+
+        return new ModuleExistingServerImportProbe(
+            SourceName: GetSetting(settings, "server.name", Path.GetFileName(sourcePath)),
+            InstallPath: installPath,
+            Settings: settings,
+            Warnings: warnings);
     }
 
     public IReadOnlyList<ConfigFieldDefinition> GetConfigFields()
@@ -77,13 +119,61 @@ public sealed class TF2Module : IGameServerModule, IManifestBackedModule
     {
         return new ServerDisplayInfo(
             IpAddress: GetSetting(instance, "network.ip", "0.0.0.0"),
-            Port: GetSetting(instance, "network.directConnectionPort", "27015"),
+            Port: GetServerPort(instance),
             MaxPlayers: GetSetting(instance, "server.maxPlayers", "24"));
     }
 
     public Task<IReadOnlyDictionary<string, object?>> ReadConfigFileSettingsAsync(ServerInstance instance, CancellationToken cancellationToken)
     {
-        return Task.FromResult<IReadOnlyDictionary<string, object?>>(new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var settings = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var path = GetServerCfgPath(instance);
+        if (!File.Exists(path))
+        {
+            return Task.FromResult<IReadOnlyDictionary<string, object?>>(settings);
+        }
+
+        foreach (var rawLine in File.ReadLines(path))
+        {
+            var line = StripCfgComment(rawLine).Trim();
+            if (line.Length == 0)
+            {
+                continue;
+            }
+
+            var parts = line.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+            {
+                continue;
+            }
+
+            var key = parts[0].Trim();
+            var value = UnquoteCfg(parts[1].Trim());
+            if (key.Equals("hostname", StringComparison.OrdinalIgnoreCase))
+            {
+                settings["server.name"] = value;
+            }
+            else if (key.Equals("sv_visiblemaxplayers", StringComparison.OrdinalIgnoreCase) &&
+                     int.TryParse(value, out var maxPlayers))
+            {
+                settings["server.maxPlayers"] = maxPlayers;
+            }
+            else if (key.Equals("rcon_password", StringComparison.OrdinalIgnoreCase))
+            {
+                settings["rcon.password"] = value;
+            }
+            else if (key.Equals("sv_password", StringComparison.OrdinalIgnoreCase))
+            {
+                settings["server.password"] = value;
+            }
+            else if (key.Equals("sv_lan", StringComparison.OrdinalIgnoreCase))
+            {
+                settings["server.lan"] = value == "1" || bool.TryParse(value, out var lan) && lan;
+            }
+        }
+
+        return Task.FromResult<IReadOnlyDictionary<string, object?>>(settings);
     }
 
     public Task WriteConfigFileSettingsAsync(ServerInstance instance, CancellationToken cancellationToken)
@@ -187,7 +277,7 @@ public sealed class TF2Module : IGameServerModule, IManifestBackedModule
     public async Task<string> ExecuteRconCommandAsync(ServerInstance instance, string command, CancellationToken cancellationToken)
     {
         var host = GetConnectableHost(GetSetting(instance, "network.ip", "127.0.0.1"));
-        var port = ParseInt(GetSetting(instance, "network.directConnectionPort", "27015"), 27015);
+        var port = ParseInt(GetServerPort(instance), 27015);
         var password = GetSetting(instance, "rcon.password", "");
 
         if (string.IsNullOrWhiteSpace(password))
@@ -209,7 +299,7 @@ public sealed class TF2Module : IGameServerModule, IManifestBackedModule
         }
 
         var host = GetQueryHost(GetSetting(instance, "network.ip", "127.0.0.1"));
-        var port = ParseInt(GetSetting(instance, "network.queryPort", GetSetting(instance, "network.directConnectionPort", "27015")), 27015);
+        var port = ParseInt(GetSetting(instance, "network.queryPort", GetServerPort(instance)), 27015);
 
         try
         {
@@ -241,10 +331,14 @@ public sealed class TF2Module : IGameServerModule, IManifestBackedModule
 
     private string BuildLaunchArguments(ServerInstance instance)
     {
+        var launchSettings = new Dictionary<string, object?>(instance.Settings, StringComparer.OrdinalIgnoreCase)
+        {
+            ["network.port"] = GetServerPort(instance)
+        };
         var arguments = Regex.Replace(Manifest.GetDefaultArguments(), "\\{(?<key>[^}]+)\\}", match =>
         {
             var key = match.Groups["key"].Value;
-            return instance.Settings.TryGetValue(key, out var value) ? value?.ToString() ?? string.Empty : string.Empty;
+            return launchSettings.TryGetValue(key, out var value) ? value?.ToString() ?? string.Empty : string.Empty;
         });
 
         var additional = GetSetting(instance, "server.additionalArguments", "");
@@ -291,6 +385,44 @@ public sealed class TF2Module : IGameServerModule, IManifestBackedModule
     private static bool GetBool(ServerInstance instance, string key)
     {
         return instance.Settings.TryGetValue(key, out var value) && bool.TryParse(value?.ToString(), out var parsed) && parsed;
+    }
+
+    private static string GetServerPort(ServerInstance instance)
+    {
+        return GetSetting(instance, "network.port", GetSetting(instance, "network.directConnectionPort", "27015"));
+    }
+
+    private static string GetServerCfgPath(ServerInstance instance)
+    {
+        return Path.Combine(instance.InstallPath, "tf", "cfg", "server.cfg");
+    }
+
+    private string ResolveExistingInstallPath(string path)
+    {
+        var sourcePath = Path.GetFullPath(path);
+        if (File.Exists(Path.Combine(sourcePath, Runtime.StartPath)))
+        {
+            return sourcePath;
+        }
+
+        var serverFilesPath = Path.Combine(sourcePath, "serverfiles");
+        return File.Exists(Path.Combine(serverFilesPath, Runtime.StartPath))
+            ? serverFilesPath
+            : sourcePath;
+    }
+
+    private static string StripCfgComment(string line)
+    {
+        var index = line.IndexOf("//", StringComparison.Ordinal);
+        return index >= 0 ? line[..index] : line;
+    }
+
+    private static string UnquoteCfg(string value)
+    {
+        var text = value.Trim();
+        return text.Length >= 2 && text[0] == '"' && text[^1] == '"'
+            ? text[1..^1].Replace("\\\"", "\"").Replace("\\\\", "\\")
+            : text;
     }
 
     private static string GetConnectableHost(string host)

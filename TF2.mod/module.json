@@ -34,7 +34,7 @@
     "portIncrements": 1,
     "queryProtocol": "A2S",
     "rconProtocol": "Source",
-    "defaultArguments": "-console -game tf -ip {network.ip} -port {network.directConnectionPort} +map {server.map} +maxplayers {server.maxPlayers} +exec server.cfg"
+    "defaultArguments": "-console -game tf -ip {network.ip} -port {network.port} +map {server.map} +maxplayers {server.maxPlayers} +exec server.cfg"
   },
   "capabilities": {
     "directConnection": true
@@ -70,7 +70,7 @@
       "defaultValue": "0.0.0.0"
     },
     {
-      "key": "network.directConnectionPort",
+      "key": "network.port",
       "label": "Server/RCON Port",
       "type": "Port",
       "defaultValue": 27015
