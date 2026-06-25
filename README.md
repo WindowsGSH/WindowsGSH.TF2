@@ -2,6 +2,13 @@
 
 WindowsGSH module for Team Fortress 2 dedicated servers.
 
+## Support
+
+If this module helps you host your servers, you can support development here:
+
+- [Ko-fi](https://ko-fi.com/shenniko)
+- [PayPal](https://paypal.me/shenniko)
+
 ## Module Layout
 
 ```text
