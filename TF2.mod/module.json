@@ -1,0 +1,181 @@
+{
+  "id": "tf2",
+  "name": "Team Fortress 2",
+  "version": "1.0.1",
+  "author": "Shenniko",
+  "description": "WindowsGSH module for installing, configuring, launching, querying, and backing up a Team Fortress 2 dedicated server.",
+  "url": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "homepage": "https://wiki.teamfortress.com/wiki/Windows_dedicated_server",
+  "repository": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "sourceUrl": "https://github.com/WindowsGSH/WindowsGSH.TF2",
+  "color": "#1E8449",
+  "moduleApiVersion": "1.0",
+  "minimumWindowsGshVersion": "0.1.0",
+  "type": "csharp",
+  "entry": "WindowsGSH.Modules.TF2.TF2Module",
+  "steam": {
+    "appId": "232250",
+    "anonymous": true,
+    "validate": true
+  },
+  "entryPoints": {
+    "start": "srcds_win64.exe",
+    "processNames": ["srcds_win64", "srcds"]
+  },
+  "runtime": {
+    "consoleStrategy": "RconPreferred",
+    "allowsEmbeddedConsole": false,
+    "hideProcessWindow": true,
+    "portIncrements": 1,
+    "queryProtocol": "A2S",
+    "rconProtocol": "Source",
+    "defaultArguments": "{server.additionalArguments}"
+  },
+  "capabilities": {
+    "directConnection": true
+  },
+  "configFields": [
+    {
+      "key": "server.name",
+      "label": "Server Name",
+      "type": "Text",
+      "defaultValue": "WindowsGSH TF2 Server",
+      "required": true
+    },
+    {
+      "key": "server.use64Bit",
+      "label": "Use 64-bit Server",
+      "type": "Boolean",
+      "defaultValue": true,
+      "group": "Runtime",
+      "description": "Uses srcds_win64.exe by default. Disable only for an older plugin that still requires the 32-bit srcds.exe runtime."
+    },
+    {
+      "key": "server.map",
+      "label": "Start Map",
+      "type": "Text",
+      "defaultValue": "ctf_2fort",
+      "required": true
+    },
+    {
+      "key": "server.maxPlayers",
+      "label": "Max Players",
+      "type": "Number",
+      "defaultValue": 24,
+      "required": true,
+      "minimum": 1,
+      "maximum": 32
+    },
+    {
+      "key": "network.ip",
+      "label": "Server IP",
+      "type": "Text",
+      "defaultValue": "0.0.0.0"
+    },
+    {
+      "key": "network.port",
+      "label": "Server/RCON Port",
+      "type": "Port",
+      "defaultValue": 27015
+    },
+    {
+      "key": "server.password",
+      "label": "Server Password",
+      "type": "Password",
+      "defaultValue": ""
+    },
+    {
+      "key": "rcon.password",
+      "label": "RCON Password",
+      "type": "Password",
+      "defaultValue": "",
+      "group": "Administration"
+    },
+    {
+      "key": "steam.gslt",
+      "label": "Steam Game Server Login Token",
+      "type": "Password",
+      "defaultValue": "",
+      "group": "Steam",
+      "description": "Create a unique token for game app 440 to appear in the public server browser."
+    },
+    {
+      "key": "server.lan",
+      "label": "LAN Server",
+      "type": "Boolean",
+      "defaultValue": false
+    },
+    {
+      "key": "sourcetv.enabled",
+      "label": "Enable SourceTV",
+      "type": "Boolean",
+      "defaultValue": false,
+      "group": "SourceTV"
+    },
+    {
+      "key": "sourcetv.port",
+      "label": "SourceTV Port",
+      "type": "Port",
+      "defaultValue": 27020,
+      "minimum": 1,
+      "maximum": 65535,
+      "group": "SourceTV",
+      "visibleWhen": { "key": "sourcetv.enabled", "isTruthy": true }
+    },
+    {
+      "key": "server.additionalArguments",
+      "label": "Additional Arguments",
+      "type": "CommandLine",
+      "defaultValue": ""
+    }
+  ],
+  "ports":   [
+    {
+      "id":  "game",
+      "name":  "Game and Query Port",
+      "protocol":  "udp",
+      "configField":  "network.port",
+      "required":  true
+    },
+    {
+      "id": "rcon",
+      "name": "Source RCON Port",
+      "protocol": "tcp",
+      "configField": "network.port",
+      "required": false,
+      "openExternally": false,
+      "checkLocalListener": false
+    },
+    {
+      "id": "sourcetv",
+      "name": "SourceTV Port",
+      "protocol": "udp",
+      "configField": "sourcetv.port",
+      "required": false,
+      "openExternally": false,
+      "checkLocalListener": false
+    }
+  ],
+  "backupTargets": [
+    {
+      "key": "server-cfg",
+      "label": "Server config",
+      "path": "tf/cfg",
+      "type": "directory"
+    },
+    {
+      "key": "custom-content",
+      "label": "Custom content",
+      "path": "tf/custom",
+      "type": "directory"
+    },
+    {
+      "key": "addons",
+      "label": "SourceMod / Metamod addons",
+      "path": "tf/addons",
+      "type": "directory"
+    }
+  ],
+  "addons": []
+}
+
